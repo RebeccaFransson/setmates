@@ -2,6 +2,7 @@ import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useEffect, useState } from 'react';
 
+import { resolveAppRoute } from '@/lib/auth-route';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 export default function IndexScreen() {
@@ -39,11 +40,25 @@ export default function IndexScreen() {
       if (!mounted) return;
       if (error) {
         setErrorMessage(error.message);
-        setState('error');
+        setState(
+          resolveAppRoute({
+            isConfigured: true,
+            hasSession: true,
+            hasProfileError: true,
+            bodyweightKg: null,
+          }),
+        );
         return;
       }
 
-      setState(profile?.bodyweight_kg != null ? 'app' : 'onboarding');
+      setState(
+        resolveAppRoute({
+          isConfigured: true,
+          hasSession: true,
+          hasProfileError: false,
+          bodyweightKg: profile?.bodyweight_kg,
+        }),
+      );
     }
 
     load();

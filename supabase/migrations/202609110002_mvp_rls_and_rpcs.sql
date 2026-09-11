@@ -450,16 +450,16 @@ begin
   )
     and is_completed = false;
 
+  select array_agg(distinct exercise_id order by exercise_id)
+  into v_exercise_ids
+  from workout_exercises
+  where workout_id = p_workout_id;
+
   delete from workout_exercises we
   where we.workout_id = p_workout_id
     and not exists (
       select 1 from sets s where s.workout_exercise_id = we.id
     );
-
-  select array_agg(distinct exercise_id order by exercise_id)
-  into v_exercise_ids
-  from workout_exercises
-  where workout_id = p_workout_id;
 
   if v_exercise_ids is null or array_length(v_exercise_ids, 1) is null then
     delete from workouts where id = p_workout_id and user_id = auth.uid();

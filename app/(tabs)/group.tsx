@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 type MembershipRow = {
   group_id: string;
   role: string;
-  groups: { name?: string; join_code?: string } | null;
+  groups: { name?: string } | null;
 };
 
 export default function GroupScreen() {
@@ -23,7 +23,7 @@ export default function GroupScreen() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('group_members')
-        .select('group_id, role, groups(name, join_code)')
+        .select('group_id, role, groups(name)')
         .order('joined_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as MembershipRow[];
@@ -106,7 +106,11 @@ export default function GroupScreen() {
         <InfoCard
           key={`${membership.group_id}-${index}`}
           title={membership.groups?.name ?? 'Group'}
-          subtitle={`Code ${membership.groups?.join_code ?? '—'}`}
+          subtitle={
+            membership.role === 'owner'
+              ? 'You created this group.'
+              : 'You are a member of this group.'
+          }
           rightLabel={membership.role}
         />
       ))}

@@ -6,7 +6,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { InfoCard } from '@/components/InfoCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SetRowInput } from '@/components/SetRowInput';
-import { lastPerformanceSummary, type ExerciseKind } from '@/lib/metrics';
+import { type ExerciseKind } from '@/lib/metrics';
 import { supabase } from '@/lib/supabase';
 
 type WorkoutRow = {
@@ -87,6 +87,7 @@ export default function WorkoutDetailScreen() {
   });
 
   const lastPerformanceQuery = useQuery<{
+    summary_text?: string;
     days_ago?: number;
     sets?: Record<string, string | number | null>[];
   } | null>({
@@ -98,6 +99,7 @@ export default function WorkoutDetailScreen() {
       });
       if (error) throw error;
       return data as {
+        summary_text?: string;
         days_ago?: number;
         sets?: Record<string, string | number | null>[];
       } | null;
@@ -139,18 +141,8 @@ export default function WorkoutDetailScreen() {
   const exerciseKind = exerciseLinkQuery.data?.exerciseKind ?? 'weight_reps';
   const exerciseName = exerciseLinkQuery.data?.exerciseName ?? 'Exercise';
   const summary =
-    lastPerformanceQuery.data?.days_ago != null
-      ? lastPerformanceSummary(
-          exerciseKind,
-          lastPerformanceQuery.data.days_ago,
-          previousSets.map((set) => ({
-            reps: Number(set.reps || 0),
-            weightKg: Number(set.weightKg || 0),
-            durationSeconds: Number(set.durationSeconds || 0),
-            distanceM: Number(set.distanceM || 0),
-          })),
-        )
-      : `First time — let's set a baseline`;
+    lastPerformanceQuery.data?.summary_text ??
+    `First time — let's set a baseline`;
 
   const workout = workoutQuery.data;
 
