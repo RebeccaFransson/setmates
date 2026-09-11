@@ -1,0 +1,5 @@
+project_id = "setmates"
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed/001_global_exercises.sql"]
