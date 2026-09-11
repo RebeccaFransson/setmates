@@ -102,6 +102,9 @@ export default function WorkoutDetailScreen() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['workout', id] });
       await queryClient.invalidateQueries({ queryKey: ['active-workout'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['last-performance', workoutQuery.data?.exerciseId],
+      });
       await queryClient.invalidateQueries({ queryKey: ['feed'] });
       Alert.alert(
         'Workout finished',

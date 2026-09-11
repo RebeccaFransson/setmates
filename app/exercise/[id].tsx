@@ -71,9 +71,9 @@ export default function ExerciseDetailScreen() {
           of your past sessions.
         </Text>
       </InfoCard>
-      {records.map((record, index) => (
+      {records.map((record) => (
         <InfoCard
-          key={`${record.type}-${index}`}
+          key={`${record.type}-${record.achieved_at}`}
           title={record.type}
           subtitle={`${record.value} · ${record.achieved_at}`}
           rightLabel="PR"

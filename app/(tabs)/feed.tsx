@@ -61,8 +61,8 @@ export default function FeedScreen() {
         />
       ) : null}
       <Text style={styles.footnote}>
-        est. 1RM and PR badges appear per workout and exercise detail in
-        milestone 5.
+        The feed shows finished sessions only, ordered by the latest completed
+        activity.
       </Text>
     </ScrollView>
   );

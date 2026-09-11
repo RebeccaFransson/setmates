@@ -102,9 +102,9 @@ export default function GroupScreen() {
           />
         </View>
       </InfoCard>
-      {memberships.map((membership, index) => (
+      {memberships.map((membership) => (
         <InfoCard
-          key={`${membership.group_id}-${index}`}
+          key={membership.group_id}
           title={membership.groups?.name ?? 'Group'}
           subtitle={
             membership.role === 'owner'
