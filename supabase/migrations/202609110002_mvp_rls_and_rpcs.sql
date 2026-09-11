@@ -262,7 +262,7 @@ begin
     raise exception 'AUTH_REQUIRED';
   end if;
 
-  select * into v_group from groups where join_code = v_code;
+  select * into v_group from groups where join_code = v_code for update;
   if not found then
     raise exception 'GROUP_NOT_FOUND';
   end if;

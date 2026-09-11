@@ -15,6 +15,12 @@ type WorkoutRow = {
   ended_at: string | null;
 };
 
+type ExerciseLink = {
+  exerciseId: string;
+  exerciseName: string;
+  exerciseKind: ExerciseKind;
+};
+
 type PreviousSet = {
   weightKg: string;
   reps: string;
@@ -54,23 +60,46 @@ export default function WorkoutDetailScreen() {
     },
   });
 
-  const lastPerformanceQuery = useQuery<{
-    days_ago?: number;
-    sets?: Record<string, string | number | null>[];
-  } | null>({
-    queryKey: ['last-performance', id],
+  const exerciseLinkQuery = useQuery<ExerciseLink | null>({
+    queryKey: ['workout-exercise-link', id],
     enabled: Boolean(id),
     queryFn: async () => {
-      const { data: exerciseLinks } = await (supabase as any)
+      const { data: links, error: linkError } = await (supabase as any)
         .from('workout_exercises')
         .select('exercise_id')
         .eq('workout_id', id)
         .order('position')
         .limit(1);
-      const exerciseId = exerciseLinks?.[0]?.exercise_id;
+      if (linkError) throw linkError;
+
+      const exerciseId = links?.[0]?.exercise_id;
       if (!exerciseId) return null;
+
+      const { data: exercise, error: exerciseError } = await (supabase as any)
+        .from('exercises')
+        .select('id, name, kind')
+        .eq('id', exerciseId)
+        .maybeSingle();
+      if (exerciseError) throw exerciseError;
+      if (!exercise) return null;
+
+      return {
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        exerciseKind: exercise.kind as ExerciseKind,
+      };
+    },
+  });
+
+  const lastPerformanceQuery = useQuery<{
+    days_ago?: number;
+    sets?: Record<string, string | number | null>[];
+  } | null>({
+    queryKey: ['last-performance', exerciseLinkQuery.data?.exerciseId],
+    enabled: Boolean(exerciseLinkQuery.data?.exerciseId),
+    queryFn: async () => {
       const { data, error } = await (supabase as any).rpc('last_performance', {
-        p_exercise_id: exerciseId,
+        p_exercise_id: exerciseLinkQuery.data?.exerciseId,
       });
       if (error) throw error;
       return data as {
@@ -111,14 +140,18 @@ export default function WorkoutDetailScreen() {
     [lastPerformanceQuery.data?.sets],
   );
 
+  const exerciseKind = exerciseLinkQuery.data?.exerciseKind ?? 'weight_reps';
+  const exerciseName = exerciseLinkQuery.data?.exerciseName ?? 'Exercise';
   const summary =
     lastPerformanceQuery.data?.days_ago != null
       ? lastPerformanceSummary(
-          'weight_reps',
+          exerciseKind,
           lastPerformanceQuery.data.days_ago,
           previousSets.map((set) => ({
             reps: Number(set.reps || 0),
             weightKg: Number(set.weightKg || 0),
+            durationSeconds: Number(set.durationSeconds || 0),
+            distanceM: Number(set.distanceM || 0),
           })),
         )
       : `First time — let's set a baseline`;
@@ -139,14 +172,14 @@ export default function WorkoutDetailScreen() {
         </Text>
       </InfoCard>
       <InfoCard
-        title="Bench Press"
+        title={exerciseName}
         subtitle="Last session values render as placeholders until you accept or override them."
       >
         <View style={styles.sets}>
           {sets.map((set, index) => (
             <SetRowInput
               key={index}
-              kind={'weight_reps' as ExerciseKind}
+              kind={exerciseKind}
               label={`Set ${index + 1}`}
               previous={previousSets[index]}
               value={set}

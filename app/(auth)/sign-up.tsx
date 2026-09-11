@@ -11,6 +11,7 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function handleSignUp() {
     if (!isSupabaseConfigured) {
@@ -22,7 +23,8 @@ export default function SignUpScreen() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    setNotice(null);
+    const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: { data: { name: name.trim() } },
@@ -34,7 +36,14 @@ export default function SignUpScreen() {
       return;
     }
 
-    router.replace('/(onboarding)');
+    if (data.session) {
+      router.replace('/(onboarding)');
+      return;
+    }
+
+    setNotice(
+      'Check your email to confirm your account, then sign in to finish onboarding.',
+    );
   }
 
   return (
@@ -66,6 +75,7 @@ export default function SignUpScreen() {
           onPress={handleSignUp}
           loading={loading}
         />
+        {notice ? <Text style={styles.notice}>{notice}</Text> : null}
         <Link href="/(auth)/sign-in" style={styles.link}>
           Already lifting with us? Sign in.
         </Link>
@@ -88,6 +98,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  notice: {
+    color: '#C7F36B',
+    fontSize: 14,
+    lineHeight: 20,
   },
   screen: {
     backgroundColor: '#0C111D',

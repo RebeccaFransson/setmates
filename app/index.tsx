@@ -29,14 +29,14 @@ export default function IndexScreen() {
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from('profiles')
-        .select('display_name, unit_preference')
+        .select('display_name, unit_preference, bodyweight_kg')
         .eq('id', session.user.id)
         .maybeSingle();
 
       if (!mounted) return;
-      setState(profile ? 'app' : 'onboarding');
+      setState(profile?.bodyweight_kg != null ? 'app' : 'onboarding');
     }
 
     load();
