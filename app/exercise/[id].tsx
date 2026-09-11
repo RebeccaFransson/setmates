@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { InfoCard } from '@/components/InfoCard';
-import { db } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 type ExerciseRow = {
   name: string;
@@ -25,7 +25,7 @@ export default function ExerciseDetailScreen() {
     queryKey: ['exercise', id],
     enabled: Boolean(id),
     queryFn: async () => {
-      const { data, error } = await db
+      const { data, error } = await (supabase as any)
         .from('exercises')
         .select('id, name, kind, primary_muscle, equipment')
         .eq('id', id)
@@ -39,7 +39,7 @@ export default function ExerciseDetailScreen() {
     queryKey: ['exercise-records', id],
     enabled: Boolean(id),
     queryFn: async () => {
-      const { data, error } = await db
+      const { data, error } = await (supabase as any)
         .from('personal_records')
         .select('type, value, achieved_at')
         .eq('exercise_id', id)

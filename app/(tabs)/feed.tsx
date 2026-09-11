@@ -3,7 +3,7 @@ import { Link } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { InfoCard } from '@/components/InfoCard';
-import { db } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { formatKg } from '@/lib/units';
 
 type FeedWorkout = {
@@ -17,7 +17,7 @@ export default function FeedScreen() {
   const { data } = useQuery<FeedWorkout[]>({
     queryKey: ['feed'],
     queryFn: async () => {
-      const { data: workouts, error } = await db
+      const { data: workouts, error } = await (supabase as any)
         .from('workouts')
         .select(
           'id, name, started_at, ended_at, bodyweight_kg, bodyweight_estimated',

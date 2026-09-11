@@ -23,4 +23,4 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-export const db = supabase as any;
+export const db = supabase;

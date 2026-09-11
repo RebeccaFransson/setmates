@@ -40,7 +40,8 @@ export function totalLoadKg(
   bodyweightKg: number,
   weightKg?: number | null,
 ): number | null {
-  if (kind === 'weight_reps') return weightKg && weightKg > 0 ? weightKg : null;
+  if (kind === 'weight_reps')
+    return weightKg != null && weightKg > 0 ? weightKg : null;
   if (kind === 'weighted_bodyweight')
     return Math.max(1, bodyweightKg + (weightKg ?? 0));
   if (kind === 'bodyweight_reps') return bodyweightKg > 0 ? bodyweightKg : null;

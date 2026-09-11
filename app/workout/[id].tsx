@@ -7,7 +7,7 @@ import { InfoCard } from '@/components/InfoCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SetRowInput } from '@/components/SetRowInput';
 import { lastPerformanceSummary, type ExerciseKind } from '@/lib/metrics';
-import { db } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 type WorkoutRow = {
   id: string;
@@ -42,7 +42,7 @@ export default function WorkoutDetailScreen() {
     queryKey: ['workout', id],
     enabled: Boolean(id),
     queryFn: async () => {
-      const { data, error } = await db
+      const { data, error } = await (supabase as any)
         .from('workouts')
         .select(
           'id, name, started_at, ended_at, bodyweight_kg, bodyweight_estimated',
@@ -61,7 +61,7 @@ export default function WorkoutDetailScreen() {
     queryKey: ['last-performance', id],
     enabled: Boolean(id),
     queryFn: async () => {
-      const { data: exerciseLinks } = await db
+      const { data: exerciseLinks } = await (supabase as any)
         .from('workout_exercises')
         .select('exercise_id')
         .eq('workout_id', id)
@@ -69,7 +69,7 @@ export default function WorkoutDetailScreen() {
         .limit(1);
       const exerciseId = exerciseLinks?.[0]?.exercise_id;
       if (!exerciseId) return null;
-      const { data, error } = await db.rpc('last_performance', {
+      const { data, error } = await (supabase as any).rpc('last_performance', {
         p_exercise_id: exerciseId,
       });
       if (error) throw error;
@@ -82,7 +82,7 @@ export default function WorkoutDetailScreen() {
 
   const finishWorkout = useMutation({
     mutationFn: async () => {
-      const { data, error } = await db.rpc('finish_workout', {
+      const { data, error } = await (supabase as any).rpc('finish_workout', {
         p_workout_id: id,
       });
       if (error) throw error;

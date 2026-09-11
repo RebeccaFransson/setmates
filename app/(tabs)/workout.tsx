@@ -4,7 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { InfoCard } from '@/components/InfoCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { db } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { formatKg } from '@/lib/units';
 
 type ActiveWorkout = {
@@ -20,7 +20,7 @@ export default function WorkoutScreen() {
   const activeWorkoutQuery = useQuery<ActiveWorkout | null>({
     queryKey: ['active-workout'],
     queryFn: async () => {
-      const { data, error } = await db
+      const { data, error } = await (supabase as any)
         .from('workouts')
         .select('id, name, bodyweight_kg, bodyweight_estimated, started_at')
         .is('ended_at', null)
@@ -34,7 +34,9 @@ export default function WorkoutScreen() {
 
   const startWorkout = useMutation({
     mutationFn: async () => {
-      const { data, error } = await db.rpc('start_workout', { p_name: null });
+      const { data, error } = await (supabase as any).rpc('start_workout', {
+        p_name: null,
+      });
       if (error) throw error;
       return data;
     },

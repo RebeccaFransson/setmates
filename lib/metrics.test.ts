@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { e1rm, setVolumeKg } from './metrics';
+import { e1rm, lastPerformanceSummary, setVolumeKg } from './metrics';
 
 function expectClose(actual: number | null, expected: number, precision = 2) {
   expect(actual).not.toBeNull();
@@ -77,5 +77,27 @@ describe('setVolumeKg', () => {
         isCompleted: false,
       }),
     ).toBe(0);
+  });
+});
+
+describe('lastPerformanceSummary', () => {
+  it('formats weight and bodyweight summaries for the placeholder header', () => {
+    expect(
+      lastPerformanceSummary('weight_reps', 4, [{ reps: 7, weightKg: 70 }]),
+    ).toBe('Last: 4 days ago · 1×7 @ 70 kg');
+    expect(lastPerformanceSummary('bodyweight_reps', 2, [{ reps: 15 }])).toBe(
+      'Last: 2 days ago · 1×15',
+    );
+  });
+
+  it('formats duration and distance summaries', () => {
+    expect(
+      lastPerformanceSummary('duration', 3, [{ durationSeconds: 90 }]),
+    ).toBe('Last: 3 days ago · 1×90 s');
+    expect(
+      lastPerformanceSummary('distance_duration', 6, [
+        { distanceM: 1000, durationSeconds: 300 },
+      ]),
+    ).toBe('Last: 6 days ago · 1000 m in 300 s');
   });
 });

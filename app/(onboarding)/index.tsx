@@ -4,7 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FormField } from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { db, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export default function OnboardingScreen() {
   const [displayName, setDisplayName] = useState('');
@@ -26,7 +26,7 @@ export default function OnboardingScreen() {
       return;
     }
 
-    const { error } = await db.from('profiles').upsert({
+    const { error } = await (supabase as any).from('profiles').upsert({
       id: session.user.id,
       display_name: displayName.trim() || 'Lifter',
       unit_preference: unitPreference,

@@ -53,6 +53,7 @@ export function SetRowInput({ kind, label, value, previous, onChange }: Props) {
             label="kg"
             value={value.weightKg ?? ''}
             placeholder={previous?.weightKg ?? '0'}
+            allowNegative={kind === 'weighted_bodyweight'}
             onChangeText={(next) => onChange({ ...value, weightKg: next })}
           />
         ) : null}
@@ -95,6 +96,7 @@ type NumericFieldProps = {
   value: string;
   placeholder: string;
   onChangeText: (text: string) => void;
+  allowNegative?: boolean;
 };
 
 function NumericField({
@@ -102,12 +104,13 @@ function NumericField({
   value,
   placeholder,
   onChangeText,
+  allowNegative = false,
 }: NumericFieldProps) {
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
-        keyboardType="decimal-pad"
+        keyboardType={allowNegative ? 'numbers-and-punctuation' : 'decimal-pad'}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor="#98A2B3"

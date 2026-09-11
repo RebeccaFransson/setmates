@@ -5,7 +5,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FormField } from '@/components/FormField';
 import { InfoCard } from '@/components/InfoCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { db } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 type MembershipRow = {
   group_id: string;
@@ -21,7 +21,7 @@ export default function GroupScreen() {
   const membershipsQuery = useQuery<MembershipRow[]>({
     queryKey: ['memberships'],
     queryFn: async () => {
-      const { data, error } = await db
+      const { data, error } = await (supabase as any)
         .from('group_members')
         .select('group_id, role, groups(name, join_code)')
         .order('joined_at', { ascending: false });
@@ -32,7 +32,7 @@ export default function GroupScreen() {
 
   const createGroup = useMutation({
     mutationFn: async () => {
-      const { error } = await db.rpc('create_group', {
+      const { error } = await (supabase as any).rpc('create_group', {
         p_name: groupName.trim(),
       });
       if (error) throw error;
@@ -47,7 +47,7 @@ export default function GroupScreen() {
 
   const joinGroup = useMutation({
     mutationFn: async () => {
-      const { error } = await db.rpc('join_group_with_code', {
+      const { error } = await (supabase as any).rpc('join_group_with_code', {
         p_code: joinCode.trim(),
       });
       if (error) throw error;

@@ -6,7 +6,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FormField } from '@/components/FormField';
 import { InfoCard } from '@/components/InfoCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { db, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 type ExerciseRow = {
   id: string;
@@ -28,7 +28,7 @@ export default function ExercisesScreen() {
   const exercisesQuery = useQuery<ExerciseRow[]>({
     queryKey: ['exercises'],
     queryFn: async () => {
-      const { data, error } = await db
+      const { data, error } = await (supabase as any)
         .from('exercises')
         .select('id, name, kind, primary_muscle, group_id, is_archived')
         .eq('is_archived', false)
@@ -43,7 +43,7 @@ export default function ExercisesScreen() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      const { error } = await db.from('exercises').insert({
+      const { error } = await (supabase as any).from('exercises').insert({
         name: name.trim(),
         kind: defaultKind,
         primary_muscle: muscle.trim() || 'full body',

@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 
 import { InfoCard } from '@/components/InfoCard';
-import { db } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 type GroupMemberRow = {
   role: string;
@@ -17,7 +17,7 @@ export default function GroupDetailScreen() {
     queryKey: ['group-members', id],
     enabled: Boolean(id),
     queryFn: async () => {
-      const { data, error } = await db
+      const { data, error } = await (supabase as any)
         .from('group_members')
         .select('role, profiles(display_name)')
         .eq('group_id', id)
