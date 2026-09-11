@@ -9,23 +9,20 @@ import { SetRowInput } from '@/components/SetRowInput';
 import { type ExerciseKind } from '@/lib/metrics';
 import { supabase } from '@/lib/supabase';
 
-type WorkoutRow = {
-  id: string;
-  name: string | null;
-  ended_at: string | null;
-};
-
-type ExerciseLink = {
-  exerciseId: string;
-  exerciseName: string;
-  exerciseKind: ExerciseKind;
-};
-
 type PreviousSet = {
   weightKg: string;
   reps: string;
   durationSeconds: string;
   distanceM: string;
+};
+
+type WorkoutDetail = {
+  id: string;
+  name: string | null;
+  ended_at: string | null;
+  exerciseId: string | null;
+  exerciseName: string;
+  exerciseKind: ExerciseKind;
 };
 
 const emptySet = (): PreviousSet => ({
@@ -44,63 +41,51 @@ export default function WorkoutDetailScreen() {
     emptySet(),
   ]);
 
-  const workoutQuery = useQuery<WorkoutRow | null>({
+  const workoutQuery = useQuery<WorkoutDetail | null>({
     queryKey: ['workout', id],
     enabled: Boolean(id),
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('workouts')
         .select(
-          'id, name, started_at, ended_at, bodyweight_kg, bodyweight_estimated',
+          'id, name, ended_at, workout_exercises(position, exercise_id, exercises(id, name, kind))',
         )
         .eq('id', id)
         .maybeSingle();
       if (error) throw error;
-      return (data ?? null) as WorkoutRow | null;
-    },
-  });
+      if (!data) return null;
 
-  const exerciseLinkQuery = useQuery<ExerciseLink | null>({
-    queryKey: ['workout-exercise-link', id],
-    enabled: Boolean(id),
-    queryFn: async () => {
-      const { data: links, error: linkError } = await (supabase as any)
-        .from('workout_exercises')
-        .select('exercise_id, exercises(id, name, kind)')
-        .eq('workout_id', id)
-        .order('position')
-        .limit(1);
-      if (linkError) throw linkError;
-
-      const link = links?.[0];
-      const exercise = Array.isArray(link?.exercises)
-        ? link.exercises[0]
-        : link?.exercises;
-      if (!link?.exercise_id || !exercise) return null;
+      const firstLink = [...(data.workout_exercises ?? [])].sort(
+        (a, b) => (a.position ?? 0) - (b.position ?? 0),
+      )[0];
+      const exercise = Array.isArray(firstLink?.exercises)
+        ? firstLink.exercises[0]
+        : firstLink?.exercises;
 
       return {
-        exerciseId: link.exercise_id,
-        exerciseName: exercise.name,
-        exerciseKind: exercise.kind as ExerciseKind,
+        id: data.id,
+        name: data.name,
+        ended_at: data.ended_at,
+        exerciseId: firstLink?.exercise_id ?? null,
+        exerciseName: exercise?.name ?? 'Exercise',
+        exerciseKind: (exercise?.kind ?? 'weight_reps') as ExerciseKind,
       };
     },
   });
 
   const lastPerformanceQuery = useQuery<{
     summary_text?: string;
-    days_ago?: number;
     sets?: Record<string, string | number | null>[];
   } | null>({
-    queryKey: ['last-performance', exerciseLinkQuery.data?.exerciseId],
-    enabled: Boolean(exerciseLinkQuery.data?.exerciseId),
+    queryKey: ['last-performance', workoutQuery.data?.exerciseId],
+    enabled: Boolean(workoutQuery.data?.exerciseId),
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc('last_performance', {
-        p_exercise_id: exerciseLinkQuery.data?.exerciseId,
+        p_exercise_id: workoutQuery.data?.exerciseId,
       });
       if (error) throw error;
       return data as {
         summary_text?: string;
-        days_ago?: number;
         sets?: Record<string, string | number | null>[];
       } | null;
     },
@@ -138,12 +123,9 @@ export default function WorkoutDetailScreen() {
     [lastPerformanceQuery.data?.sets],
   );
 
-  const exerciseKind = exerciseLinkQuery.data?.exerciseKind ?? 'weight_reps';
-  const exerciseName = exerciseLinkQuery.data?.exerciseName ?? 'Exercise';
   const summary =
     lastPerformanceQuery.data?.summary_text ??
     `First time — let's set a baseline`;
-
   const workout = workoutQuery.data;
 
   return (
@@ -160,14 +142,14 @@ export default function WorkoutDetailScreen() {
         </Text>
       </InfoCard>
       <InfoCard
-        title={exerciseName}
+        title={workout?.exerciseName ?? 'Exercise'}
         subtitle="Last session values render as placeholders until you accept or override them."
       >
         <View style={styles.sets}>
           {sets.map((set, index) => (
             <SetRowInput
               key={index}
-              kind={exerciseKind}
+              kind={workout?.exerciseKind ?? 'weight_reps'}
               label={`Set ${index + 1}`}
               previous={previousSets[index]}
               value={set}

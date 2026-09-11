@@ -2,7 +2,7 @@ create extension if not exists pgtap;
 
 begin;
 
-select plan(10);
+select plan(11);
 
 create temp table test_ids (
   user_a uuid,
@@ -83,6 +83,11 @@ select set_config('request.jwt.claim.sub', (select user_c::text from test_ids), 
 select throws_ok($$ select join_group_with_code('ZZZZZZ') $$, 'GROUP_NOT_FOUND', 'bad join code is rejected');
 select is((select count(*) from groups), 0::bigint, 'outsider cannot read groups they do not belong to');
 select is((select count(*) from exercises where name = 'Partner Cable Fly'), 0::bigint, 'outsider cannot see another groups custom exercise');
+select throws_ok(
+  $$ insert into exercises (group_id, name, kind, primary_muscle, equipment, created_by) values ((select group_id from test_ids), 'Leaked Exercise', 'weight_reps', 'back', 'barbell', (select user_c from test_ids)) $$,
+  'new row violates row-level security policy for table "exercises"',
+  'non-members cannot create custom exercises in another group'
+);
 
 select set_config('request.jwt.claim.sub', (select user_a::text from test_ids), true);
 with inserted as (
