@@ -425,6 +425,7 @@ declare
   v_exercise_ids uuid[];
   v_exercise_id uuid;
   v_new_prs jsonb := '[]'::jsonb;
+  v_deleted_count integer;
 begin
   if auth.uid() is null then
     raise exception 'AUTH_REQUIRED';
@@ -437,6 +438,10 @@ begin
 
   if not found then
     raise exception 'WORKOUT_NOT_FOUND';
+  end if;
+
+  if v_workout.ended_at is not null then
+    raise exception 'WORKOUT_ALREADY_FINISHED';
   end if;
 
   delete from sets
@@ -529,6 +534,7 @@ as $$
 declare
   v_exercise_ids uuid[];
   v_exercise_id uuid;
+  v_deleted_count integer;
 begin
   if auth.uid() is null then
     raise exception 'AUTH_REQUIRED';
@@ -541,6 +547,11 @@ begin
 
   delete from workouts
   where id = p_workout_id and user_id = auth.uid();
+
+  get diagnostics v_deleted_count = row_count;
+  if v_deleted_count = 0 then
+    raise exception 'WORKOUT_NOT_FOUND';
+  end if;
 
   if v_exercise_ids is null then
     return;

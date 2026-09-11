@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 export default function IndexScreen() {
-  const [state, setState] = useState<'loading' | 'auth' | 'onboarding' | 'app'>(
-    'loading',
-  );
+  const [state, setState] = useState<
+    'loading' | 'auth' | 'onboarding' | 'app' | 'error'
+  >('loading');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -29,13 +30,19 @@ export default function IndexScreen() {
         return;
       }
 
-      const { data: profile } = await (supabase as any)
+      const { data: profile, error } = await (supabase as any)
         .from('profiles')
         .select('display_name, unit_preference, bodyweight_kg')
         .eq('id', session.user.id)
         .maybeSingle();
 
       if (!mounted) return;
+      if (error) {
+        setErrorMessage(error.message);
+        setState('error');
+        return;
+      }
+
       setState(profile?.bodyweight_kg != null ? 'app' : 'onboarding');
     }
 
@@ -62,12 +69,25 @@ export default function IndexScreen() {
     );
   }
 
+  if (state === 'error') {
+    return (
+      <View style={styles.loading}>
+        <Text style={styles.text}>Could not load your profile.</Text>
+        <Text style={styles.error}>{errorMessage}</Text>
+      </View>
+    );
+  }
+
   if (state === 'auth') return <Redirect href="/(auth)/sign-in" />;
   if (state === 'onboarding') return <Redirect href="/(onboarding)" />;
   return <Redirect href="/(tabs)/feed" />;
 }
 
 const styles = StyleSheet.create({
+  error: {
+    color: '#F97066',
+    textAlign: 'center',
+  },
   loading: {
     alignItems: 'center',
     backgroundColor: '#0C111D',
