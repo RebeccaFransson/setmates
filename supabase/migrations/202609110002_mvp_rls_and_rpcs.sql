@@ -274,6 +274,8 @@ begin
     raise exception 'ALREADY_MEMBER';
   end if;
 
+  perform 1 from group_members where group_id = v_group.id for update;
+
   select count(*) into v_member_count from group_members where group_id = v_group.id;
   if v_member_count >= 10 then
     raise exception 'GROUP_FULL';
@@ -639,3 +641,19 @@ begin
   );
 end;
 $$;
+
+
+revoke all on function create_group(text) from public;
+revoke all on function join_group_with_code(text) from public;
+revoke all on function start_workout(text) from public;
+revoke all on function finish_workout(uuid) from public;
+revoke all on function delete_workout(uuid) from public;
+revoke all on function last_performance(uuid) from public;
+revoke all on function recompute_prs_for_exercise(uuid, uuid) from public;
+
+grant execute on function create_group(text) to authenticated;
+grant execute on function join_group_with_code(text) to authenticated;
+grant execute on function start_workout(text) to authenticated;
+grant execute on function finish_workout(uuid) to authenticated;
+grant execute on function delete_workout(uuid) to authenticated;
+grant execute on function last_performance(uuid) to authenticated;

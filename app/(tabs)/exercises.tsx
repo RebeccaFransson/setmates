@@ -16,6 +16,11 @@ type ExerciseRow = {
   group_id: string | null;
 };
 
+type MembershipRow = {
+  group_id: string;
+  groups: { name?: string } | null;
+};
+
 const defaultKind = 'weight_reps';
 
 export default function ExercisesScreen() {
@@ -23,7 +28,7 @@ export default function ExercisesScreen() {
   const [search, setSearch] = useState('');
   const [name, setName] = useState('');
   const [muscle, setMuscle] = useState('');
-  const [groupId, setGroupId] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
 
   const exercisesQuery = useQuery<ExerciseRow[]>({
     queryKey: ['exercises'],
@@ -38,6 +43,18 @@ export default function ExercisesScreen() {
     },
   });
 
+  const membershipsQuery = useQuery<MembershipRow[]>({
+    queryKey: ['exercise-groups'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('group_members')
+        .select('group_id, groups(name)')
+        .order('joined_at');
+      if (error) throw error;
+      return (data ?? []) as MembershipRow[];
+    },
+  });
+
   const createExercise = useMutation({
     mutationFn: async () => {
       const {
@@ -47,7 +64,7 @@ export default function ExercisesScreen() {
         name: name.trim(),
         kind: defaultKind,
         primary_muscle: muscle.trim() || 'full body',
-        group_id: groupId.trim() || undefined,
+        group_id: selectedGroupId,
         created_by: session?.user.id,
       });
       if (error) throw error;
@@ -70,6 +87,8 @@ export default function ExercisesScreen() {
         exercise.primary_muscle.toLowerCase().includes(q),
     );
   }, [exercisesQuery.data, search]);
+
+  const memberships = membershipsQuery.data ?? [];
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
@@ -97,13 +116,21 @@ export default function ExercisesScreen() {
             onChangeText={setMuscle}
             placeholder="chest"
           />
-          <FormField
-            label="Group id"
-            value={groupId}
-            onChangeText={setGroupId}
-            placeholder="Paste your group UUID"
-            autoCapitalize="none"
-          />
+          <Text style={styles.groupLabel}>Choose group</Text>
+          <View style={styles.groupOptions}>
+            {memberships.map((membership) => (
+              <PrimaryButton
+                key={membership.group_id}
+                label={membership.groups?.name ?? membership.group_id}
+                onPress={() => setSelectedGroupId(membership.group_id)}
+                tone={
+                  selectedGroupId === membership.group_id
+                    ? 'primary'
+                    : 'secondary'
+                }
+              />
+            ))}
+          </View>
           <Text style={styles.hint}>
             SPEC-GAP: near-duplicate warnings and richer kind selection need
             final design polish.
@@ -112,6 +139,7 @@ export default function ExercisesScreen() {
             label="Save exercise"
             onPress={() => createExercise.mutate()}
             loading={createExercise.isPending}
+            disabled={!selectedGroupId || !name.trim()}
           />
         </View>
       </InfoCard>
@@ -136,6 +164,14 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 12,
+  },
+  groupLabel: {
+    color: '#D0D5DD',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  groupOptions: {
+    gap: 8,
   },
   hint: {
     color: '#98A2B3',

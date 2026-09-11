@@ -66,25 +66,20 @@ export default function WorkoutDetailScreen() {
     queryFn: async () => {
       const { data: links, error: linkError } = await (supabase as any)
         .from('workout_exercises')
-        .select('exercise_id')
+        .select('exercise_id, exercises(id, name, kind)')
         .eq('workout_id', id)
         .order('position')
         .limit(1);
       if (linkError) throw linkError;
 
-      const exerciseId = links?.[0]?.exercise_id;
-      if (!exerciseId) return null;
-
-      const { data: exercise, error: exerciseError } = await (supabase as any)
-        .from('exercises')
-        .select('id, name, kind')
-        .eq('id', exerciseId)
-        .maybeSingle();
-      if (exerciseError) throw exerciseError;
-      if (!exercise) return null;
+      const link = links?.[0];
+      const exercise = Array.isArray(link?.exercises)
+        ? link.exercises[0]
+        : link?.exercises;
+      if (!link?.exercise_id || !exercise) return null;
 
       return {
-        exerciseId: exercise.id,
+        exerciseId: link.exercise_id,
         exerciseName: exercise.name,
         exerciseKind: exercise.kind as ExerciseKind,
       };

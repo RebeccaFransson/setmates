@@ -39,10 +39,16 @@ export default function ExerciseDetailScreen() {
     queryKey: ['exercise-records', id],
     enabled: Boolean(id),
     queryFn: async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return [];
+
       const { data, error } = await (supabase as any)
         .from('personal_records')
         .select('type, value, achieved_at')
         .eq('exercise_id', id)
+        .eq('user_id', session.user.id)
         .order('achieved_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as RecordRow[];
@@ -62,7 +68,7 @@ export default function ExerciseDetailScreen() {
         </Text>
         <Text style={styles.text}>
           Exercise detail is where the MVP shows est. 1RM, PRs, and a plain list
-          of past sessions.
+          of your past sessions.
         </Text>
       </InfoCard>
       {records.map((record, index) => (

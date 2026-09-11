@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { e1rm, lastPerformanceSummary, setVolumeKg } from './metrics';
+import {
+  deltaText,
+  e1rm,
+  lastPerformanceSummary,
+  setVolumeKg,
+} from './metrics';
 
 function expectClose(actual: number | null, expected: number, precision = 2) {
   expect(actual).not.toBeNull();
@@ -99,5 +104,41 @@ describe('lastPerformanceSummary', () => {
         { distanceM: 1000, durationSeconds: 300 },
       ]),
     ).toBe('Last: 6 days ago · 1000 m in 300 s');
+  });
+});
+
+describe('deltaText', () => {
+  it('reports rep and weight changes for load-bearing sets', () => {
+    expect(
+      deltaText(
+        'weight_reps',
+        { kind: 'weight_reps', reps: 8, weightKg: 70 },
+        { kind: 'weight_reps', reps: 7, weightKg: 70 },
+      ),
+    ).toBe('+1 rep');
+    expect(
+      deltaText(
+        'weight_reps',
+        { kind: 'weight_reps', reps: 7, weightKg: 72.5 },
+        { kind: 'weight_reps', reps: 7, weightKg: 70 },
+      ),
+    ).toBe('+2.5 kg');
+  });
+
+  it('reports time and distance deltas for non-load-bearing kinds', () => {
+    expect(
+      deltaText(
+        'duration',
+        { kind: 'duration', durationSeconds: 95 },
+        { kind: 'duration', durationSeconds: 90 },
+      ),
+    ).toBe('+5 s');
+    expect(
+      deltaText(
+        'distance_duration',
+        { kind: 'distance_duration', distanceM: 1200 },
+        { kind: 'distance_duration', distanceM: 1000 },
+      ),
+    ).toBe('+200 m');
   });
 });
